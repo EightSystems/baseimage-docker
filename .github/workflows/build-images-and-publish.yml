@@ -50,7 +50,7 @@ jobs:
         with:
           context: ./
           build-args: |
-            BASE_IMAGE=alpine-${{ matrix.alpine }}
+            BASE_IMAGE=alpine:${{ matrix.alpine }}
           file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64,linux/arm64
