@@ -53,7 +53,7 @@ jobs:
             BASE_IMAGE=alpine:${{ matrix.alpine }}
           file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          platforms: linux/amd64,linux/arm64,linux/armv7,linux/armv6
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:alpine-${{ matrix.alpine }},${{ env.DOCKER_IMAGE_NAME }}:alpine-${{ matrix.alpine }}
           labels: ${{ steps.meta.outputs.labels }}
 
