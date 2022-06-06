@@ -1,4 +1,4 @@
-name: Build PHP Images
+name: Build Alpine Base Images
 on:
   push:
     branches: [main]
