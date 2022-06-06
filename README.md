@@ -1,6 +1,6 @@
 # A minimal Alpine base image modified for Docker-friendliness
 
-[![Release](https://github.com/EightSystems/baseimage-docker/actions/workflows/main.yml/badge.svg?branch=focal-1.1.0)](https://github.com/EightSystems/baseimage-docker/actions/workflows/main.yml)
+[![Release](https://github.com/EightSystems/baseimage-docker/actions/workflows/build-images-and-publish.yml/badge.svg?branch=main)](https://github.com/EightSystems/baseimage-docker/actions/workflows/build-images-and-publish.yml)
 
 An Alpine Based Docker base image (Inspired by [8sistemas/baseimage-docker-docker](https://github.com/8sistemas/baseimage-docker-docker)), which has the my_init init, and some of the goodies from the Ubuntu based one.
 
