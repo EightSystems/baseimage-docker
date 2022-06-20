@@ -7,3 +7,4 @@ minimal_apk_install='apk add --no-cache'
 export DISABLE_SYSLOG=${DISABLE_SYSLOG:-0}
 export DISABLE_SSH=${DISABLE_SSH:-0}
 export DISABLE_CRON=${DISABLE_CRON:-0}
+export DISABLE_SUPERVISORD=${DISABLE_SUPERVISORD:-0}

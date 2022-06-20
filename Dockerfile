@@ -17,6 +17,7 @@ RUN apk add --no-cache bash && \
 	/bd_build/system_services.sh && \
 	/bd_build/utilities.sh && \
 	/bd_build/cleanup.sh && \
-    rm -rf /bd_build
+    rm -rf /bd_build && \
+    rm -rf /etc/supervisor.d/*.ini
 
 CMD ["/sbin/my_init"]

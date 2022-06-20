@@ -26,3 +26,6 @@ ln -s /etc/container_environment.sh /etc/profile.d/
 
 ## Install cron daemon.
 [ "$DISABLE_CRON" -eq 0 ] && /bd_build/services/cron/cron.sh || true
+
+## Install supervisord daemon.
+[ "$DISABLE_SUPERVISORD" -eq 0 ] && /bd_build/services/supervisord/supervisord.sh || true
