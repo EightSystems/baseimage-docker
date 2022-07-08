@@ -17,6 +17,7 @@ jobs:
       matrix:
         php: ["8.1", "8.0", "7.4"]
         variants: ["mysql", "pgsql", "mysql-nginx", "pgsql-nginx"]
+        subvariant: ["", "-xdebug"]
     permissions:
       contents: read
       packages: write
@@ -51,20 +52,20 @@ jobs:
         with:
           context: ./
           build-args: |
-            BASE_IMAGE=8sistemas/laravel-alpine:${{matrix.php}}-${{ matrix.variants }}
+            BASE_IMAGE=8sistemas/laravel-alpine:${{matrix.php}}-${{ matrix.variants }}${{ matrix.subvariant }}
           file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64,linux/arm64
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:laravel-alpine-${{matrix.php}}-${{ matrix.variants }},${{ env.DOCKER_IMAGE_NAME }}:laravel-alpine-${{matrix.php}}-${{ matrix.variants }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:laravel-alpine-${{matrix.php}}-${{ matrix.variants }}${{ matrix.subvariant }},${{ env.DOCKER_IMAGE_NAME }}:laravel-alpine-${{matrix.php}}-${{ matrix.variants }}${{ matrix.subvariant }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Run Security Scan against laravel-alpine-${{matrix.php}}-${{ matrix.variants }}
+      - name: Run Security Scan against laravel-alpine-${{matrix.php}}-${{ matrix.variants }}${{ matrix.subvariant }}
         uses: anchore/scan-action@v3
         with:
-          image: "ghcr.io/eightsystems/baseimage-docker:laravel-alpine-${{matrix.php}}-${{ matrix.variants }}"
+          image: "ghcr.io/eightsystems/baseimage-docker:laravel-alpine-${{matrix.php}}-${{ matrix.variants }}${{ matrix.subvariant }}"
           acs-report-enable: true
           fail-build: false
-      - name: Upload Scan Report for laravel-alpine-${{matrix.php}}-${{ matrix.variants }}
+      - name: Upload Scan Report for laravel-alpine-${{matrix.php}}-${{ matrix.variants }}${{ matrix.subvariant }}
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: results.sarif
