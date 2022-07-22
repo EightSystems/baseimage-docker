@@ -12,6 +12,10 @@ mkdir -p /etc/service/sshd
 touch /etc/service/sshd/down
 cp $SSHD_BUILD_PATH/sshd.runit /etc/service/sshd/run
 sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config
+
+# Enable Root login
+sed -i 's/root:!/root:*/g' /etc/shadow
+
 cp $SSHD_BUILD_PATH/00_regen_ssh_host_keys.sh /etc/my_init.d/
 
 ## Install default SSH key for root and app.
