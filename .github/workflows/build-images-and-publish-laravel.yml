@@ -15,7 +15,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        php: ["8.1", "8.0", "7.4"]
+        php: ["8.1", "8.0", "8.2"]
         variants: ["mysql", "pgsql", "mysql-nginx", "pgsql-nginx"]
         subvariant: ["", "-xdebug"]
     permissions:
@@ -52,19 +52,19 @@ jobs:
         with:
           context: ./
           build-args: |
-            BASE_IMAGE=8sistemas/laravel-alpine:${{matrix.php}}-${{ matrix.variants }}${{ matrix.subvariant }}
+            BASE_IMAGE=8sistemas/laravel-alpine:${{matrix.php}}-alpine3.16-${{ matrix.variants }}${{ matrix.subvariant }}
           file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64,linux/arm64
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:laravel-alpine-${{matrix.php}}-${{ matrix.variants }}${{ matrix.subvariant }},${{ env.DOCKER_IMAGE_NAME }}:laravel-alpine-${{matrix.php}}-${{ matrix.variants }}${{ matrix.subvariant }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:laravel-alpine-${{matrix.php}}-alpine3.16-${{ matrix.variants }}${{ matrix.subvariant }},${{ env.DOCKER_IMAGE_NAME }}:laravel-alpine-${{matrix.php}}-alpine3.16-${{ matrix.variants }}${{ matrix.subvariant }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Run Security Scan against laravel-alpine-${{matrix.php}}-${{ matrix.variants }}${{ matrix.subvariant }}
+      - name: Run Security Scan against laravel-alpine-${{matrix.php}}-alpine3.16-${{ matrix.variants }}${{ matrix.subvariant }}
         uses: anchore/scan-action@v3
         with:
-          image: "ghcr.io/eightsystems/baseimage-docker:laravel-alpine-${{matrix.php}}-${{ matrix.variants }}${{ matrix.subvariant }}"
+          image: "ghcr.io/eightsystems/baseimage-docker:laravel-alpine-${{matrix.php}}-alpine3.16-${{ matrix.variants }}${{ matrix.subvariant }}"
           fail-build: false
-      - name: Upload Scan Report for laravel-alpine-${{matrix.php}}-${{ matrix.variants }}${{ matrix.subvariant }}
+      - name: Upload Scan Report for laravel-alpine-${{matrix.php}}-alpine3.16-${{ matrix.variants }}${{ matrix.subvariant }}
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: results.sarif
