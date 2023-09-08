@@ -1,5 +1,6 @@
 name: Build Laravel Alpine Base Images
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   schedule:
