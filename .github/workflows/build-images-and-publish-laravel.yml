@@ -54,6 +54,7 @@ jobs:
           context: ./
           build-args: |
             BASE_IMAGE=8sistemas/laravel-alpine:${{matrix.php}}-alpine3.16-${{ matrix.variants }}${{ matrix.subvariant }}
+            ALPINE_VERSION=3.16
           file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64,linux/arm64

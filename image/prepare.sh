@@ -16,9 +16,17 @@ EOF
 
 apk add --no-cache python3 runit
 
-ln -s /sbin/sv /usr/bin/sv
-ln -s /sbin/runsvdir /usr/bin/runsvdir
-ln -s /sbin/runsvchdir /usr/bin/runsvchdir
+if [ ! -f /usr/bin/sv ]; then
+    ln -s /sbin/sv /usr/bin/sv
+fi
+
+if [ ! -f /usr/bin/runsvdir ]; then
+    ln -s /sbin/runsvdir /usr/bin/runsvdir
+fi
+
+if [ ! -f /usr/bin/runsvchdir ]; then
+    ln -s /sbin/runsvchdir /usr/bin/runsvchdir
+fi
 
 echo -n en_US.UTF-8 > /etc/container_environment/LANG
 echo -n en_US.UTF-8 > /etc/container_environment/LC_CTYPE
