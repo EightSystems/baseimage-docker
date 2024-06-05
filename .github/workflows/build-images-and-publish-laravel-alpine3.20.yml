@@ -1,4 +1,4 @@
-name: Build Alpine Base Images
+name: Build Laravel Alpine Base Images (Alpine 3.20)
 on:
   workflow_dispatch:
   push:
@@ -14,9 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     if: (!contains(github.event.head_commit.message, '[skipci]') && !contains(github.event.head_commit.message, '[noci]'))
     strategy:
-      max-parallel: 2
+      max-parallel: 4
       matrix:
-        alpine: ["3.15", "3.16", "3.20"]
+        php: ["8.3"]
+        variants: ["mysql", "pgsql", "mysql-nginx", "pgsql-nginx"]
+        subvariant: ["", "-xdebug"]
     permissions:
       contents: read
       packages: write
@@ -51,19 +53,19 @@ jobs:
         with:
           context: ./
           build-args: |
-            BASE_IMAGE=alpine:${{ matrix.alpine }}
+            BASE_IMAGE=8sistemas/laravel-alpine:${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}
           file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64,linux/arm64
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:alpine-${{ matrix.alpine }},${{ env.DOCKER_IMAGE_NAME }}:alpine-${{ matrix.alpine }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick,${{ env.DOCKER_IMAGE_NAME }}:laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Run Security Scan against alpine-${{ matrix.alpine }}
+      - name: Run Security Scan against laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick
         uses: anchore/scan-action@v3
         with:
-          image: "ghcr.io/eightsystems/baseimage-docker:alpine-${{ matrix.alpine }}"
+          image: "ghcr.io/eightsystems/baseimage-docker:laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick"
           fail-build: false
-      - name: Upload Scan Report for alpine-${{ matrix.alpine }}
+      - name: Upload Scan Report for laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: results.sarif
