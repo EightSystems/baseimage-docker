@@ -3,8 +3,6 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-  schedule:
-    - cron: "0 0 1,15 * *"
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: eightsystems/baseimage-docker
