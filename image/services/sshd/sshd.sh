@@ -6,7 +6,7 @@ set -x
 SSHD_BUILD_PATH=/bd_build/services/sshd
 
 ## Install the SSH server.
-if [ "$ALPINE_VERSION" = "3.20" ]; then
+if [ "$ALPINE_VERSION" = "3.20" -o  "$ALPINE_VERSION" = "3.23" ]; then
     $minimal_apk_install openssh openssh-server-common-openrc
 else
     $minimal_apk_install openssh
