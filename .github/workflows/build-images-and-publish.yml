@@ -58,13 +58,17 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:alpine-${{ matrix.alpine }},${{ env.DOCKER_IMAGE_NAME }}:alpine-${{ matrix.alpine }}
           labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
 
       - name: Run Security Scan against alpine-${{ matrix.alpine }}
         uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+        id: scan
         with:
           image: "ghcr.io/eightsystems/baseimage-docker:alpine-${{ matrix.alpine }}"
           fail-build: false
+          severity-cutoff: critical
       - name: Upload Scan Report for alpine-${{ matrix.alpine }}
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: results.sarif
+          sarif_file: ${{ steps.scan.outputs.sarif }}
