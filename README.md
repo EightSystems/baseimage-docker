@@ -1,14 +1,16 @@
-# A minimal Alpine base image modified for Docker-friendliness
+# baseimage-docker — Alpine Edition
 
 [![Release](https://github.com/EightSystems/baseimage-docker/actions/workflows/build-images-and-publish.yml/badge.svg?branch=main)](https://github.com/EightSystems/baseimage-docker/actions/workflows/build-images-and-publish.yml)
 
-An Alpine Based Docker base image (Inspired by [8sistemas/baseimage-docker-docker](https://github.com/8sistemas/baseimage-docker-docker)), which has the my_init init, and some of the goodies from the Ubuntu based one.
+A "translation" of the [phusion/baseimage](https://github.com/phusion/baseimage-docker) concept to Alpine Linux. It provides the `my_init` init system, runit service supervision, and many of the same goodies — but on a much smaller and more secure foundation.
 
-Use this if you want to migrate from the Ubuntu base image to Alpine with a lower migration friction.
+Use this if you want to migrate from the Ubuntu base image to Alpine with lower migration friction and a fraction of the image size.
 
 You can use it as a base for your own Docker images.
 
 Baseimage-docker is available for pulling from [the Docker registry](https://registry.hub.docker.com/r/8sistemas/baseimage-docker/)!
+
+> **Security Notice:** Only the latest Alpine version receives active security updates. Older tags (e.g. `alpine-3.20`) are kept as-is and may contain software with known CVEs if upstream maintainers do not backport fixes. Always use the latest Alpine tag for production workloads.
 
 **Table of contents**
 
@@ -50,7 +52,7 @@ The image is called `8sistemas/baseimage-docker`, and is available on the Docker
     # Use 8sistemas/baseimage-docker as base image. To make your builds reproducible, make
     # sure you lock down to a specific version, not to `latest`!
 
-    FROM 8sistemas/baseimage-docker:alpine-3.14
+    FROM 8sistemas/baseimage-docker:alpine-3.23
 
     # Use baseimage-docker's init system.
     CMD ["/sbin/my_init"]
@@ -153,7 +155,7 @@ by default before sending SIGKILL, upon `docker stop` or receiving SIGTERM.
 If you use `/sbin/my_init` as the main container command, then any environment variables set with `docker run --env` or with the `ENV` command in the Dockerfile, will be picked up by `my_init`. These variables will also be passed to all child processes, including `/etc/my_init.d` startup scripts, Runit and Runit-managed services. There are however a few caveats you should be aware of:
 
  * Environment variables on Unix are inherited on a per-process basis. This means that it is generally not possible for a child process to change the environment variables of other processes.
- * Because of the aforementioned point, there is no good central place for defining environment variables for all applications and services. Debian has the `/etc/environment` file but it only works in some situations.
+ * Because of the aforementioned point, there is no good central place for defining environment variables for all applications and services. Some Linux distributions have the `/etc/environment` file but it only works in some situations.
  * Some services change environment variables for child processes. Nginx is one such example: it removes all environment variables unless you explicitly instruct it to retain them through the `env` configuration option. If you host any applications on Nginx (e.g. using the [passenger-docker](https://github.com/phusion/passenger-docker) image, or using Phusion Passenger in your own image) then they will not see the environment variables that were originally passed by Docker.
  * We ignore HOME, SHELL, USER and a bunch of other environment variables on purpose, because _not_ ignoring them will break multi-user containers. See https://github.com/EightSystems/baseimage-docker/pull/86 -- A workaround for setting the `HOME` environment variable looks like this: `RUN echo /root > /etc/container_environment/HOME`. See https://github.com/EightSystems/baseimage-docker/issues/119
 
@@ -244,13 +246,9 @@ In order to ensure that all application log messages are captured by syslog-ng, 
 <a name="upgrading_os"></a>
 ### Upgrading the operating system inside the container
 
-Baseimage-docker images contain an Ubuntu operating system (see OS version at [Overview](#overview)). You may want to update this OS from time to time, for example to pull in the latest security updates. OpenSSL is a notorious example. Vulnerabilities are discovered in OpenSSL on a regular basis, so you should keep OpenSSL up-to-date as much as you can.
+Baseimage-docker images are based on Alpine Linux. You may want to update the OS from time to time, for example to pull in the latest security updates. While we release updated images on a schedule, you can also upgrade inside your Dockerfile:
 
-While we release Baseimage-docker images with the latest OS updates from time to time, you do not have to rely on us. You can update the OS inside Baseimage-docker images yourself, and it is recommended that you do this instead of waiting for us.
-
-To upgrade the OS in the image, run this in your Dockerfile:
-
-    RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold"
+    RUN apk upgrade --no-cache
 
 <a name="container_administration"></a>
 ## Container administration
@@ -484,71 +482,39 @@ If for whatever reason you want to build the image yourself instead of downloadi
 
 Clone this repository:
 
-    git clone https://github.com/8sistemas/baseimage-docker-docker.git
+    git clone https://github.com/EightSystems/baseimage-docker.git
     cd baseimage-docker
-
-Start a virtual machine with Docker in it. You can use the Vagrantfile that we've already provided.
-
-First, install `vagrant-disksize` plug-in:
-
-    vagrant plugin install vagrant-disksize:
-
-Then, start the virtual machine
-
-    vagrant up
-    vagrant ssh
-    cd /vagrant
 
 Build the image:
 
-    make build
-
-If you want to call the resulting image something else, pass the NAME variable, like this:
-
-    make build NAME=joe/baseimage
-
-You can also change the `ubuntu` base-image to `debian` as these distributions are quite similar.
-
-    make build BASE_IMAGE=debian:stretch
-
-The image will be: `8sistemas/baseimage-docker-debian-stretch`. Use the `NAME` variable in combination with the `BASE_IMAGE` one to call it `joe/stretch`.
-
-    make build BASE_IMAGE=debian:stretch NAME=joe/stretch
-
-To verify that the various services are started, when the image is run as a container, add `test` to the end of your make invocations, e.g.:
-
-    make build BASE_IMAGE=debian:stretch NAME=joe/stretch test
+    docker build -t 8sistemas/baseimage:alpine-3.23 \
+      --build-arg BASE_IMAGE=alpine:3.23 \
+      --build-arg ALPINE_VERSION=3.23 \
+      -f Dockerfile .
 
 
 <a name="removing_optional_services"></a>
 ### Removing optional services
 
-The default baseimage-docker installs `syslog-ng`, `cron` and `sshd` services during the build process.
+The default baseimage installs `syslog-ng`, `openssh`, `cron` and `supervisord` services during the build process.
 
-In case you don't need one or more of these services in your image, you can disable its installation through the `image/buildconfig` that is sourced within `image/system_services.sh`.  Do this at build time by passing a variable in with `--build-arg`  as in `docker build --build-arg DISABLE_SYSLOG=1 image/`, or you may set the variable in `image/Dockerfile` with an ENV setting above the RUN directive.
+In case you don't need one or more of these services in your image, you can disable its installation through the `image/buildconfig` file. Do this at build time by passing a variable with `--build-arg` as in `docker build --build-arg DISABLE_SYSLOG=1 image/`.
 
-These represent build-time configuration, so setting them in the shell env at build-time [will not have any effect](https://github.com/EightSystems/baseimage-docker/issues/459#issuecomment-439177442).  Setting them in child images' Dockerfiles will also not have any effect.)
-
-You can also set them directly as shown in the following example, to prevent `sshd` from being installed into your image, set `1` to the `DISABLE_SSH` variable in the `./image/buildconfig` file.
+You can also set them directly in the `./image/buildconfig` file:
 
     ### In ./image/buildconfig
     # ...
     # Default services
     # Set 1 to the service you want to disable
     export DISABLE_SYSLOG=0
-    export DISABLE_SSH=1
+    export DISABLE_SSH=0
     export DISABLE_CRON=0
+    export DISABLE_SUPERVISORD=0
 
-Then you can proceed with `make build` command.
+Then proceed with the build.
 
 <a name="conclusion"></a>
 ## Conclusion
 
- * Using baseimage-docker? [Tweet about us](https://twitter.com/share) or [follow us on Twitter](https://twitter.com/phusion_nl).
- * Having problems? Want to participate in development? Please post a message at [the discussion forum](https://groups.google.com/d/forum/passenger-docker).
- * Looking for a more complete base image, one that is ideal for Ruby, Python, Node.js and Meteor web apps? Take a look at [passenger-docker](https://github.com/phusion/passenger-docker).
- * Need a helping hand? Phusion also offers [consulting](https://www.phusion.nl/consultancy) on a wide range of topics, including Web Development, UI/UX Research & Design, Technology Migration and Auditing. 
-
-[<img src="https://avatars.githubusercontent.com/u/830588?s=200&v=4">](https://www.phusion.nl/)
-
-Please enjoy baseimage-docker, a product by [Phusion](http://www.phusion.nl/). :-)
+ * Having problems? Want to participate in development? [Open an issue](https://github.com/EightSystems/baseimage-docker/issues).
+ * Originally inspired by [phusion/baseimage-docker](https://github.com/phusion/baseimage-docker) — this is the Alpine "translation".
