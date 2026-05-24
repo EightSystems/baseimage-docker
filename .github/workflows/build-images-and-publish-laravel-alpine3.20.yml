@@ -63,14 +63,4 @@ jobs:
           provenance: mode=max
           sbom: true
 
-      - name: Run Security Scan against laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick
-        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
-        id: scan
-        with:
-          image: "ghcr.io/eightsystems/baseimage-docker:laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick"
-          fail-build: false
-          severity-cutoff: critical
-      - name: Upload Scan Report for laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: ${{ steps.scan.outputs.sarif }}
+

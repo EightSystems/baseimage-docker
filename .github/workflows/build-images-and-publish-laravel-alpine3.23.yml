@@ -16,7 +16,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        php: ["8.5"]
+        php: ["8.4", "8.5"]
         variants: ["mysql", "pgsql", "mysql-nginx", "pgsql-nginx"]
         subvariant: ["", "-xdebug"]
     permissions:

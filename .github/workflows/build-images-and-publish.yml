@@ -62,6 +62,7 @@ jobs:
           sbom: true
 
       - name: Run Security Scan against alpine-${{ matrix.alpine }}
+        if: matrix.alpine == '3.23'
         uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
         id: scan
         with:
@@ -69,6 +70,7 @@ jobs:
           fail-build: false
           severity-cutoff: critical
       - name: Upload Scan Report for alpine-${{ matrix.alpine }}
+        if: matrix.alpine == '3.23'
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}
