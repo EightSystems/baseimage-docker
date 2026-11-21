@@ -16,17 +16,14 @@ EOF
 
 apk add --no-cache python3 runit
 
-if [ ! -f /usr/bin/sv ]; then
-    ln -s /sbin/sv /usr/bin/sv
-fi
-
-if [ ! -f /usr/bin/runsvdir ]; then
-    ln -s /sbin/runsvdir /usr/bin/runsvdir
-fi
-
-if [ ! -f /usr/bin/runsvchdir ]; then
-    ln -s /sbin/runsvchdir /usr/bin/runsvchdir
-fi
+for bin in sv runsvdir runsvchdir; do
+    target="$(command -v "$bin" || true)"
+    [ -n "$target" ] || { echo "runit binary not found: $bin" >&2; exit 1; }
+    if [ "$target" != "/usr/bin/$bin" ]; then
+        rm -f "/usr/bin/$bin"
+        ln -s "$target" "/usr/bin/$bin"
+    fi
+done
 
 echo -n en_US.UTF-8 > /etc/container_environment/LANG
 echo -n en_US.UTF-8 > /etc/container_environment/LC_CTYPE

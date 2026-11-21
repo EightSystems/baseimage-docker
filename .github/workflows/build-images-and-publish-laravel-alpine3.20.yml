@@ -48,6 +48,29 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},${{ env.DOCKER_IMAGE_NAME }}
+      - name: Build image for smoke test
+        uses: docker/build-push-action@v7
+        if: github.event_name != 'pull_request'
+        with:
+          context: ./
+          load: true
+          build-args: |
+            BASE_IMAGE=ghcr.io/eightsystems/laravel-alpine:${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}
+            ALPINE_VERSION=3.20
+          file: ./Dockerfile
+          tags: ${{ env.DOCKER_IMAGE_NAME }}:laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick-test
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Smoke test image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker run --rm \
+            -v "$PWD/tests/ci/image-smoke-test.sh:/smoke-test.sh:ro" \
+            -e ALPINE_VERSION="3.20" \
+            --entrypoint /bin/sh \
+            ${{ env.DOCKER_IMAGE_NAME }}:laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick-test \
+            /smoke-test.sh
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
         with:
@@ -62,3 +85,29 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           provenance: mode=max
           sbom: true
+
+      - name: Trivy scan (report) for laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scanners: vuln
+          image-ref: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick"
+          format: sarif
+          output: trivy-results.sarif
+          severity: LOW,MEDIUM,HIGH,CRITICAL
+          exit-code: "0"
+
+      - name: Trivy gate (CRITICAL/HIGH) for laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scanners: vuln
+          image-ref: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick"
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+
+      - name: Upload Trivy report for laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        continue-on-error: true
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-laravel-alpine-${{matrix.php}}-alpine3.20-${{ matrix.variants }}${{ matrix.subvariant }}-imagick

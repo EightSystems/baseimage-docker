@@ -16,7 +16,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        alpine: ["3.20", "3.23"]
+        alpine: ["3.20", "3.23", "3.24"]
     permissions:
       contents: read
       packages: write
@@ -46,6 +46,29 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},${{ env.DOCKER_IMAGE_NAME }}
+      - name: Build image for smoke test
+        uses: docker/build-push-action@v7
+        if: github.event_name != 'pull_request'
+        with:
+          context: ./
+          load: true
+          build-args: |
+            BASE_IMAGE=alpine:${{ matrix.alpine }}
+            ALPINE_VERSION=${{ matrix.alpine }}
+          file: ./Dockerfile
+          tags: ${{ env.DOCKER_IMAGE_NAME }}:alpine-${{ matrix.alpine }}-test
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Smoke test image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker run --rm \
+            -v "$PWD/tests/ci/image-smoke-test.sh:/smoke-test.sh:ro" \
+            -e ALPINE_VERSION="${{ matrix.alpine }}" \
+            --entrypoint /bin/sh \
+            ${{ env.DOCKER_IMAGE_NAME }}:alpine-${{ matrix.alpine }}-test \
+            /smoke-test.sh
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
         with:
@@ -62,7 +85,7 @@ jobs:
           sbom: true
 
       - name: Run Security Scan against alpine-${{ matrix.alpine }}
-        if: matrix.alpine == '3.23'
+        if: matrix.alpine == '3.24'
         uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
         id: scan
         with:
@@ -70,7 +93,33 @@ jobs:
           fail-build: false
           severity-cutoff: critical
       - name: Upload Scan Report for alpine-${{ matrix.alpine }}
-        if: matrix.alpine == '3.23'
+        if: matrix.alpine == '3.24'
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}
+
+      - name: Trivy scan (report) for alpine-${{ matrix.alpine }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scanners: vuln
+          image-ref: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:alpine-${{ matrix.alpine }}"
+          format: sarif
+          output: trivy-results.sarif
+          severity: LOW,MEDIUM,HIGH,CRITICAL
+          exit-code: "0"
+
+      - name: Trivy gate (CRITICAL/HIGH) for alpine-${{ matrix.alpine }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scanners: vuln
+          image-ref: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:alpine-${{ matrix.alpine }}"
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+
+      - name: Upload Trivy report for alpine-${{ matrix.alpine }}
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        continue-on-error: true
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-alpine-${{ matrix.alpine }}

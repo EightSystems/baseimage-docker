@@ -52,7 +52,7 @@ The image is called `8sistemas/baseimage-docker`, and is available on the Docker
     # Use 8sistemas/baseimage-docker as base image. To make your builds reproducible, make
     # sure you lock down to a specific version, not to `latest`!
 
-    FROM 8sistemas/baseimage-docker:alpine-3.23
+    FROM 8sistemas/baseimage-docker:alpine-3.24
 
     # Use baseimage-docker's init system.
     CMD ["/sbin/my_init"]
@@ -487,9 +487,9 @@ Clone this repository:
 
 Build the image:
 
-    docker build -t 8sistemas/baseimage:alpine-3.23 \
-      --build-arg BASE_IMAGE=alpine:3.23 \
-      --build-arg ALPINE_VERSION=3.23 \
+    docker build -t 8sistemas/baseimage:alpine-3.24 \
+      --build-arg BASE_IMAGE=alpine:3.24 \
+      --build-arg ALPINE_VERSION=3.24 \
       -f Dockerfile .
 
 
